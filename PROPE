@@ -1,0 +1,118 @@
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import { motion } from "framer-motion";
+
+const defaultQuestions = [
+  {
+    id: 1,
+    title: "გულის ხმაური #1",
+    audio: "/audio/heart1.mp3",
+    choices: ["ნორმალური პირველი ტონი", "სისტოლური შუილი", "დიათოლური შუილი"],
+    correct: 1,
+  },
+  {
+    id: 2,
+    title: "ფილტვების ხმაური #1",
+    audio: "/audio/lung1.mp3",
+    choices: ["ვეზიკულარული სუნთქვა", "ხიხინი", "კრეპიტაცია"],
+    correct: 2,
+  },
+];
+
+export default function Home() {
+  const [questions, setQuestions] = useState(defaultQuestions);
+  const [answers, setAnswers] = useState({});
+  const [score, setScore] = useState(null);
+
+  const handleSelect = (qid, index) => {
+    setAnswers((prev) => ({ ...prev, [qid]: index }));
+  };
+
+  const calculateScore = () => {
+    let sc = 0;
+    questions.forEach((q) => {
+      if (answers[q.id] === q.correct) sc++;
+    });
+    setScore(sc);
+  };
+
+  const [newQ, setNewQ] = useState({ title: "", audio: "", choices: "", correct: "0" });
+
+  const addQuestion = () => {
+    const choices = newQ.choices.split(";");
+    setQuestions((prev) => [
+      ...prev,
+      {
+        id: prev.length + 1,
+        title: newQ.title,
+        audio: newQ.audio,
+        choices,
+        correct: parseInt(newQ.correct),
+      },
+    ]);
+    setNewQ({ title: "", audio: "", choices: "", correct: "0" });
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <h1 className="text-2xl font-bold">აუსკულტაციის ტესტები</h1>
+
+      {questions.map((q) => (
+        <Card key={q.id} className="bg-white shadow p-4">
+          <CardContent className="space-y-2">
+            <p className="font-semibold">{q.title}</p>
+            <audio controls src={q.audio} className="w-full" />
+            <div className="space-y-1">
+              {q.choices.map((c, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name={`q-${q.id}`}
+                    checked={answers[q.id] === i}
+                    onChange={() => handleSelect(q.id, i)}
+                  />
+                  <label>{c}</label>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+
+      <Button onClick={calculateScore}>ქულის გამოთვლა</Button>
+      {score !== null && <p className="text-lg">შენი ქულაა: {score} / {questions.length}</p>}
+
+      <div className="border-t pt-4">
+        <h2 className="text-xl font-semibold">🛠️ დაემატე ახალი ტესტი (ადმინ ფანელი)</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            placeholder="სათაური ( напр: ფილტვის ხმაური #3 )"
+            value={newQ.title}
+            onChange={(e) => setNewQ({ ...newQ, title: e.target.value })}
+          />
+          <Input
+            placeholder="აუდიო ფაილის ლინკი ( напр: /audio/lung3.mp3 )"
+            value={newQ.audio}
+            onChange={(e) => setNewQ({ ...newQ, audio: e.target.value })}
+          />
+          <Textarea
+            placeholder="პასუხები მძიმით გამოყოფილი ( напр: ვარიანტი 1; ვარიანტი 2; ვარიანტი 3 )"
+            value={newQ.choices}
+            onChange={(e) => setNewQ({ ...newQ, choices: e.target.value })}
+          />
+          <Input
+            type="number"
+            placeholder="სწორი პასუხის ინდექსი ( напр: 0 )"
+            value={newQ.correct}
+            onChange={(e) => setNewQ({ ...newQ, correct: e.target.value })}
+          />
+        </div>
+        <Button className="mt-2" onClick={addQuestion}>დამატება</Button>
+      </div>
+    </div>
+  );
+}
